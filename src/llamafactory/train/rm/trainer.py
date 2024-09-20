@@ -89,17 +89,36 @@ class PairwiseTrainer(Trainer):
         Note that the first element will be removed from the output tuple.
         See: https://github.com/huggingface/transformers/blob/v4.40.0/src/transformers/trainer.py#L3842
         """
-        _, _, values = model(**inputs, output_hidden_states=True, return_dict=True, use_cache=False)
-        batch_size = inputs["input_ids"].size(0) // 2
-        chosen_masks, rejected_masks = torch.split(inputs["attention_mask"], batch_size, dim=0)
-        chosen_rewards, rejected_rewards = torch.split(values, batch_size, dim=0)
-        chosen_scores = chosen_rewards.gather(dim=-1, index=(chosen_masks.sum(dim=-1, keepdim=True) - 1))
-        rejected_scores = rejected_rewards.gather(dim=-1, index=(rejected_masks.sum(dim=-1, keepdim=True) - 1))
-        chosen_scores, rejected_scores = chosen_scores.squeeze(), rejected_scores.squeeze()
+        # _, _, values = model(**inputs, output_hidden_states=True, return_dict=True, use_cache=False)
+        # batch_size = inputs["input_ids"].size(0) // 2
+        # chosen_masks, rejected_masks = torch.split(inputs["attention_mask"], batch_size, dim=0)
+        # chosen_rewards, rejected_rewards = torch.split(values, batch_size, dim=0)
+        # chosen_scores = chosen_rewards.gather(dim=-1, index=(chosen_masks.sum(dim=-1, keepdim=True) - 1))
+        # rejected_scores = rejected_rewards.gather(dim=-1, index=(rejected_masks.sum(dim=-1, keepdim=True) - 1))
+        # chosen_scores, rejected_scores = chosen_scores.squeeze(), rejected_scores.squeeze()
 
-        loss = -torch.nn.functional.logsigmoid(chosen_scores.float() - rejected_scores.float()).mean()
+        # loss = -torch.nn.functional.logsigmoid(chosen_scores.float() - rejected_scores.float()).mean()
+        # if return_outputs:
+        #     return loss, (loss, chosen_scores, rejected_scores)
+        # else:
+        #     return loss
+        target = inputs.pop("scores")
+        # logger.info(f"dxt target: {inputs}")
+        _, _, values = model(**inputs, output_hidden_states=True, return_dict=True, use_cache=False)
+        # batch_size = inputs["input_ids"].size(0) // 2
+        # chosen_masks, rejected_masks = torch.split(inputs["attention_mask"], batch_size, dim=0)
+        # chosen_rewards, rejected_rewards = torch.split(values, batch_size, dim=0)
+        chosen_rewards = values
+        chosen_masks = inputs["attention_mask"]
+        chosen_scores = chosen_rewards.gather(dim=-1, index=(chosen_masks.sum(dim=-1, keepdim=True) - 1)).squeeze()
+        # rejected_scores = rejected_rewards.gather(dim=-1, index=(rejected_masks.sum(dim=-1, keepdim=True) - 1))
+        # chosen_scores, rejected_scores = chosen_scores.squeeze(), rejected_scores.squeeze()
+
+        # loss = -torch.nn.functional.logsigmoid(chosen_scores.float() - rejected_scores.float()).mean()
+
+        loss = torch.nn.functional.mse_loss(target, chosen_scores)
         if return_outputs:
-            return loss, (loss, chosen_scores, rejected_scores)
+            return loss, (loss, values, values)
         else:
             return loss
 

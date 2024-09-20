@@ -100,6 +100,8 @@ def preprocess_pairwise_dataset(
         model_inputs["rejected_labels"].append(rejected_labels)
         model_inputs["images"].append(examples["_images"][i])
         model_inputs["videos"].append(examples["_videos"][i])
+        model_inputs["chosen_scores"].append(examples["_response"][i][0]["score"])
+        model_inputs["rejected_scores"].append(examples["_response"][i][1]["score"])
 
     return model_inputs
 

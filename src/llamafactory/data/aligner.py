@@ -197,8 +197,8 @@ def convert_sharegpt(
 
         prompt = aligned_messages
         response = [
-            {"role": tag_mapping[chosen[dataset_attr.role_tag]], "content": chosen[dataset_attr.content_tag]},
-            {"role": tag_mapping[rejected[dataset_attr.role_tag]], "content": rejected[dataset_attr.content_tag]},
+            {"role": tag_mapping[chosen[dataset_attr.role_tag]], "content": chosen[dataset_attr.content_tag], "score": chosen[dataset_attr.score_tag]},
+            {"role": tag_mapping[rejected[dataset_attr.role_tag]], "content": rejected[dataset_attr.content_tag], "score": rejected[dataset_attr.score_tag]},
         ]
     else:  # normal example
         prompt = aligned_messages[:-1]
